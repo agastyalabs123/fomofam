@@ -1,0 +1,146 @@
+{
+  "identity": {
+    "name": "FomoFam",
+    "tagline": "Discover. Fund. Attend. On-Chain.",
+    "mission": "A cinematic, scroll-choreographed event discovery platform that bridges Web3 functionality with consumer-grade aesthetics.",
+    "tone": "Exciting, Trustworthy, Modern, Clean, 'FOMO-inducing'",
+    "target_audience": "Event organizers, attendees, sponsors in Web3/tech/community space"
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Outfit, Plus Jakarta Sans, sans-serif",
+      "weight": "Bold (700) or ExtraBold (800)",
+      "tracking": "tracking-tight",
+      "usage": "Use for all section titles, hero text, and major callouts. Avoid Inter for headings."
+    },
+    "body": {
+      "font_family": "Inter, DM Sans, sans-serif",
+      "weight": "Regular (400) or Medium (500)",
+      "tracking": "tracking-normal",
+      "usage": "Use for descriptions, card details, and functional text."
+    },
+    "mono": {
+      "font_family": "JetBrains Mono, monospace",
+      "usage": "Use sparingly for stats, dates, or 'code-like' aesthetic details."
+    }
+  },
+  "colors": {
+    "theme": "light",
+    "palette": {
+      "primary": "#FF6B4A",
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#1A1A2E",
+      "secondary_foreground": "#FFFFFF",
+      "background": "#FAFAFA",
+      "surface": "#FFFFFF",
+      "surface_glass": "rgba(255, 255, 255, 0.7)",
+      "border": "#E4E4E7",
+      "muted": "#F4F4F5",
+      "accent_gradient": "linear-gradient(135deg, #FF6B4A 0%, #FF8E75 100%)",
+      "text_primary": "#1A1A2E",
+      "text_secondary": "#52525B",
+      "text_tertiary": "#A1A1AA"
+    },
+    "usage_rules": {
+      "primary": "Use for Primary CTAs, active states, and key highlights. Do not overuse.",
+      "secondary": "Use for Footer, dark section backgrounds, or strong contrast text.",
+      "gradients": "Use soft gradients for backgrounds or button hovers. No full-screen dark gradients.",
+      "glassmorphism": "Use for floating cards, sticky headers, and overlays."
+    }
+  },
+  "layout": {
+    "grid_system": {
+      "marketing": "Use 'Bento' grid (grid-cols-12) for asymmetrical layouts.",
+      "listing": "Use responsive grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4) with gap-6 or gap-8.",
+      "spacing": "Generous spacing. Use p-8, py-20, gap-8. Avoid cramped layouts."
+    },
+    "containers": {
+      "max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "card_radius": "rounded-2xl",
+      "button_radius": "rounded-full"
+    },
+    "z_index": {
+      "floating_elements": "z-10",
+      "header": "z-50",
+      "modal": "z-50",
+      "background_orbs": "z-0"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-white hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-primary/25 active:scale-95",
+      "secondary": "bg-white text-secondary border border-gray-200 hover:bg-gray-50 transition-all duration-300",
+      "ghost": "text-secondary hover:bg-gray-100 transition-all duration-200"
+    },
+    "cards": {
+      "event": "bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden",
+      "feature": "bg-white/50 backdrop-blur-md border border-white/60 rounded-xl p-6 shadow-sm",
+      "glass": "bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg"
+    },
+    "inputs": {
+      "style": "bg-white border-gray-200 focus:border-primary focus:ring-primary/20 rounded-lg h-12 px-4 transition-all"
+    }
+  },
+  "motion": {
+    "philosophy": "Butter smooth, physics-based, scroll-driven.",
+    "libraries": [
+      "framer-motion (primary for interactive)",
+      "lenis (smooth scroll)",
+      "css scroll-driven animations (performance)"
+    ],
+    "patterns": {
+      "fade_up": "initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }}",
+      "stagger": "staggerChildren: 0.1",
+      "float": "animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}",
+      "parallax": "Use scroll() timeline for background elements moving at different speeds."
+    }
+  },
+  "visual_enhancers": {
+    "backgrounds": "Use subtle gradient orbs (blur-3xl) moving slowly in the background.",
+    "shadows": "Use colored shadows for primary elements (shadow-primary/20).",
+    "borders": "Use 1px borders with low opacity for clean separation.",
+    "textures": "Optional: very subtle grain overlay (opacity 0.03) for filmic feel."
+  },
+  "images": {
+    "hero": [
+      {
+        "url": "https://images.unsplash.com/photo-1760539619289-3047c6ce2119?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHw0fHxjb25jZXJ0JTIwY3Jvd2QlMjBleGNpdGVtZW50JTIwYWVzdGhldGljfGVufDB8fHx8MTc3MzU4OTAwMHww&ixlib=rb-4.1.0&q=85",
+        "alt": "Concert crowd excitement",
+        "category": "hero_background"
+      },
+      {
+         "url": "https://images.unsplash.com/photo-1763259012836-00ad2f1a8d87?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBhYnN0cmFjdCUyMGdyYWRpZW50JTIwb3JiJTIwc2hhcGVzJTIwbGlnaHQlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3MzU4OTAwMXww&ixlib=rb-4.1.0&q=85",
+         "alt": "Abstract gradient orb",
+         "category": "decorative_orb"
+      }
+    ],
+    "events": [
+       {
+        "url": "https://images.unsplash.com/photo-1749723477883-4e3dde4e3a28?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwxfHx0ZWNoJTIwbWVldHVwJTIwZGl2ZXJzZSUyMGdyb3VwJTIwaGFwcHl8ZW58MHx8fHwxNzczNTg4OTk4fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Tech meetup group",
+        "category": "event_thumbnail"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1752649938189-05463ebbe6bd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwzfHxjcmVhdGl2ZSUyMHdvcmtzaG9wJTIwcGVvcGxlJTIwd29ya2luZ3xlbnwwfHx8fDE3NzM1ODkwMDB8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Creative workshop",
+        "category": "event_thumbnail"
+      }
+    ]
+  },
+  "universal_guidelines": {
+    "do_not": [
+      "Do NOT use dark mode.",
+      "Do NOT use gradients for text.",
+      "Do NOT use generic 'Inter' for headings.",
+      "Do NOT use blockchain jargon (unless in tooltip).",
+      "Do NOT align everything to center."
+    ],
+    "must_do": [
+      "Must be mobile responsive.",
+      "Must use data-testid for all interactive elements.",
+      "Must implement hover states for all interactables.",
+      "Must use 'Outfit' or similar for headings.",
+      "Must use Leaflet for maps."
+    ]
+  }
+}
