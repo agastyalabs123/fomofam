@@ -16,7 +16,16 @@ Build a cinematic, scroll-choreographed event discovery and management platform 
 3. **Sponsors** — Back events with escrow-protected funds
 4. **Community Members** — Join interest-based communities
 
-## What's Been Implemented (March 2025)
+## What's Been Implemented (March 2025 → Updated March 2026)
+
+### REDESIGN (March 2026) — Black & White Glassmorphism
+- Pure #0A0A0A black background, heavy glassmorphism on all elements
+- Three.js 3D globe (vanilla, no r3f) with wireframe grid, city pins, atmospheric glow
+- Satoshi font (Fontshare CDN) for ultra-bold display headings
+- Dark CartoDB map tiles (black world map with white pulsing pins)
+- New section structure: Hero(Globe) → Explore → Create Events → Communities(Coming Soon) → For Organizers → Reputation → Event Types → Footer
+- Communities section with "Coming Soon" glassmorphism badge + "Launching Q2 2026" label
+- CreateEventsSection merged with HowItWorks + EventDetail into one powerful section
 
 ### Backend (`/app/backend/server.py`)
 - ✅ JWT auth: POST /api/auth/register, /api/auth/login, /api/auth/logout

@@ -80,6 +80,7 @@ export default function CommunitySection() {
                 <motion.div
                   whileHover={{ rotate: -3, scale: 1.05 }}
                   className="glass-strong rounded-2xl px-5 py-2.5 border border-white/15 rotate-[-5deg]"
+                  data-testid={`coming-soon-${c.community_id}`}
                 >
                   <div className="flex items-center gap-2">
                     <Lock size={13} className="text-white/70" />

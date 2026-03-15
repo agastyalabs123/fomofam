@@ -119,7 +119,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 pt-8 border-t border-white/6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/20 text-xs font-body">© 2025 FomoFam. All rights reserved.</p>
+          <p className="text-white/20 text-xs font-body">© 2026 FomoFam. All rights reserved.</p>
           <p className="text-white/20 text-xs font-body" data-testid="powered-by">
             Powered by <span className="text-white/35">Agastya Labs</span>
           </p>

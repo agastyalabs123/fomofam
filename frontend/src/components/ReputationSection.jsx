@@ -125,7 +125,7 @@ export default function ReputationSection() {
                 variants={{ hidden: { opacity: 0, y: 20, scale: 0.95 }, show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5 } } }}
                 whileHover={{ y: -4, scale: 1.02 }}
                 className="glass-card p-7 cursor-pointer"
-                data-testid={`event-type-${et.label.toLowerCase().replace(' ', '-')}`}
+                data-testid={`event-type-card-${et.label.toLowerCase().replace(' ', '-')}`}
               >
                 <div className="w-11 h-11 glass rounded-2xl flex items-center justify-center border border-white/10 mb-4">
                   <et.icon size={20} className="text-white/65" />
