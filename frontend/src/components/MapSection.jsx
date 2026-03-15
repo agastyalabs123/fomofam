@@ -54,7 +54,14 @@ export default function MapSection() {
 
   const filtered = activeTag === 'All'
     ? events
-    : events.filter(e => e.tags?.some(t => t.toLowerCase().includes(activeTag.toLowerCase())) || e.category?.toLowerCase().includes(activeTag.toLowerCase()));
+    : events.filter(e =>
+        e.tags?.some(t =>
+          t.toLowerCase().includes(activeTag.toLowerCase()) ||
+          activeTag.toLowerCase().includes(t.toLowerCase())
+        ) ||
+        e.category?.toLowerCase().includes(activeTag.toLowerCase()) ||
+        activeTag.toLowerCase().includes(e.category?.toLowerCase() || '')
+      );
 
   const mapCenter = [20, 40];
 
