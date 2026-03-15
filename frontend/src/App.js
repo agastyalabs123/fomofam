@@ -4,9 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/AuthCallback';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
-import MapSection from './components/MapSection';
-import EventDetailSection from './components/EventDetailSection';
-import HowItWorksSection from './components/HowItWorksSection';
+import ExploreSection from './components/ExploreSection';
+import CreateEventsSection from './components/CreateEventsSection';
 import CommunitySection from './components/CommunitySection';
 import ForOrganizersSection from './components/ForOrganizersSection';
 import ReputationSection from './components/ReputationSection';
@@ -20,9 +19,8 @@ function LandingPage({ onAuthOpen }) {
     <>
       <Navbar onAuthOpen={onAuthOpen} />
       <HeroSection onAuthOpen={onAuthOpen} />
-      <MapSection />
-      <EventDetailSection />
-      <HowItWorksSection />
+      <ExploreSection />
+      <CreateEventsSection onAuthOpen={onAuthOpen} />
       <CommunitySection />
       <ForOrganizersSection onAuthOpen={onAuthOpen} />
       <ReputationSection />
@@ -38,14 +36,9 @@ function AppRouter() {
   const location = useLocation();
 
   // Handle Google Auth callback — REMINDER: DO NOT HARDCODE THE URL
-  if (location.hash?.includes('session_id=')) {
-    return <AuthCallback />;
-  }
+  if (location.hash?.includes('session_id=')) return <AuthCallback />;
 
-  const openAuth = (tab = 'login') => {
-    setAuthTab(tab);
-    setShowAuth(true);
-  };
+  const openAuth = (tab = 'login') => { setAuthTab(tab); setShowAuth(true); };
 
   return (
     <>

@@ -9,9 +9,9 @@ export default function Navbar({ onAuthOpen }) {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handle = () => setScrolled(window.scrollY > 30);
+    window.addEventListener('scroll', handle);
+    return () => window.removeEventListener('scroll', handle);
   }, []);
 
   const scrollTo = (id) => {
@@ -21,29 +21,27 @@ export default function Navbar({ onAuthOpen }) {
 
   return (
     <motion.nav
-      initial={{ y: -80, opacity: 0 }}
+      initial={{ y: -70, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'glass-card shadow-glass py-3' : 'bg-transparent py-5'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'glass-nav py-3' : 'bg-transparent py-5'}`}
       data-testid="navbar"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2 group" data-testid="navbar-logo">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF6B4A] to-[#FF8E75] flex items-center justify-center shadow-coral-sm group-hover:scale-110 transition-transform">
-            <Zap size={16} className="text-white" fill="white" />
+        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2.5 group" data-testid="navbar-logo">
+          <div className="w-8 h-8 rounded-xl glass-strong flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Zap size={15} className="text-white" fill="white" />
           </div>
-          <span className="font-heading font-bold text-lg text-[#1A1A2E] tracking-tight">FomoFam</span>
+          <span className="font-display font-bold text-lg text-white tracking-tight">FomoFam</span>
         </button>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {[['map-section','Discover'],['how-it-works','How it Works'],['community-section','Community'],['organizers-section','For Organizers']].map(([id, label]) => (
-            <button key={id} onClick={() => scrollTo(id)} className="text-sm font-medium text-[#52525B] hover:text-[#FF6B4A] transition-colors" data-testid={`nav-${id}`}>
-              {label}
-            </button>
+        {/* Desktop links */}
+        <div className="hidden md:flex items-center gap-7">
+          {[['explore-section','Explore'],['create-events-section','Create'],['community-section','Community'],['organizers-section','Organizers']].map(([id, label]) => (
+            <button key={id} onClick={() => scrollTo(id)}
+              className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide"
+              data-testid={`nav-${id}`}>{label}</button>
           ))}
         </div>
 
@@ -51,39 +49,38 @@ export default function Navbar({ onAuthOpen }) {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-[#52525B] font-medium">Hi, {user.name?.split(' ')[0]}</span>
-              <button onClick={logout} className="btn-outline text-sm py-2 px-5" data-testid="logout-btn">Log out</button>
+              <span className="text-sm text-white/60">Hi, {user.name?.split(' ')[0]}</span>
+              <button onClick={logout} className="btn-glass text-sm py-2 px-5" data-testid="logout-btn">Log out</button>
             </div>
           ) : (
             <>
-              <button onClick={() => onAuthOpen('login')} className="btn-outline text-sm py-2 px-5" data-testid="signin-btn">Sign In</button>
-              <button onClick={() => onAuthOpen('register')} className="btn-coral text-sm py-2 px-5" data-testid="get-started-nav-btn">Get Started</button>
+              <button onClick={() => onAuthOpen('login')} className="btn-glass text-sm py-2.5 px-5" data-testid="signin-btn">Sign In</button>
+              <button onClick={() => onAuthOpen('register')} className="btn-white text-sm py-2.5 px-5" data-testid="get-started-nav-btn">Get Started</button>
             </>
           )}
         </div>
 
-        {/* Mobile menu btn */}
-        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 rounded-lg hover:bg-gray-100" data-testid="mobile-menu-btn">
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        {/* Mobile menu */}
+        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 glass rounded-xl" data-testid="mobile-menu-btn">
+          {menuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass-card border-t border-white/20 px-4 py-4 space-y-3"
+            className="md:hidden glass-nav border-t border-white/5 px-4 py-4 space-y-3"
             data-testid="mobile-menu"
           >
-            {[['map-section','Discover'],['how-it-works','How it Works'],['community-section','Community']].map(([id, label]) => (
-              <button key={id} onClick={() => scrollTo(id)} className="block w-full text-left py-2 text-[#52525B] hover:text-[#FF6B4A] font-medium">{label}</button>
+            {[['explore-section','Explore'],['create-events-section','Create'],['community-section','Community']].map(([id, label]) => (
+              <button key={id} onClick={() => scrollTo(id)} className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium">{label}</button>
             ))}
             <div className="flex gap-2 pt-2">
-              <button onClick={() => { onAuthOpen('login'); setMenuOpen(false); }} className="flex-1 btn-outline text-sm py-2" data-testid="mobile-signin-btn">Sign In</button>
-              <button onClick={() => { onAuthOpen('register'); setMenuOpen(false); }} className="flex-1 btn-coral text-sm py-2" data-testid="mobile-register-btn">Get Started</button>
+              <button onClick={() => { onAuthOpen('login'); setMenuOpen(false); }} className="flex-1 btn-glass text-sm py-2.5" data-testid="mobile-signin-btn">Sign In</button>
+              <button onClick={() => { onAuthOpen('register'); setMenuOpen(false); }} className="flex-1 btn-white text-sm py-2.5" data-testid="mobile-register-btn">Get Started</button>
             </div>
           </motion.div>
         )}
