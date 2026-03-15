@@ -1,54 +1,68 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { useState } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import AuthCallback from './pages/AuthCallback';
+import Navbar from './components/Navbar';
+import HeroSection from './components/HeroSection';
+import MapSection from './components/MapSection';
+import EventDetailSection from './components/EventDetailSection';
+import HowItWorksSection from './components/HowItWorksSection';
+import CommunitySection from './components/CommunitySection';
+import ForOrganizersSection from './components/ForOrganizersSection';
+import ReputationSection from './components/ReputationSection';
+import EventTypesSection from './components/EventTypesSection';
+import Footer from './components/Footer';
+import AuthModal from './components/AuthModal';
+import './App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
+function LandingPage({ onAuthOpen }) {
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <>
+      <Navbar onAuthOpen={onAuthOpen} />
+      <HeroSection onAuthOpen={onAuthOpen} />
+      <MapSection />
+      <EventDetailSection />
+      <HowItWorksSection />
+      <CommunitySection />
+      <ForOrganizersSection onAuthOpen={onAuthOpen} />
+      <ReputationSection />
+      <EventTypesSection />
+      <Footer />
+    </>
   );
 }
 
-export default App;
+function AppRouter() {
+  const [showAuth, setShowAuth] = useState(false);
+  const [authTab, setAuthTab] = useState('login');
+  const location = useLocation();
+
+  // Handle Google Auth callback — REMINDER: DO NOT HARDCODE THE URL
+  if (location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
+
+  const openAuth = (tab = 'login') => {
+    setAuthTab(tab);
+    setShowAuth(true);
+  };
+
+  return (
+    <>
+      <Routes>
+        <Route path="*" element={<LandingPage onAuthOpen={openAuth} />} />
+      </Routes>
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRouter />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
