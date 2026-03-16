@@ -54,10 +54,10 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 20 }}
             transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none"
             data-testid="auth-modal"
           >
-            <div className="glass-strong rounded-3xl border border-white/12 overflow-hidden shadow-glass-lg">
+            <div className="glass-strong rounded-3xl border border-white/12 overflow-hidden shadow-glass-lg w-full max-w-md pointer-events-auto">
               <div className="p-7 pb-0 relative">
                 <button onClick={onClose} className="absolute top-5 right-5 w-8 h-8 glass rounded-xl flex items-center justify-center text-white/40 hover:text-white border border-white/8 hover:border-white/20 transition-all" data-testid="close-auth-modal">
                   <X size={14} />
