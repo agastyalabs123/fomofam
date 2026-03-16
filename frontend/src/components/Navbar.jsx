@@ -38,11 +38,24 @@ export default function Navbar({ onAuthOpen }) {
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-7">
-          {[['explore-section','Explore'],['create-events-section','Create'],['community-section','Community'],['organizers-section','Organizers']].map(([id, label]) => (
+          {[['explore-section','Explore'],['create-events-section','Create'],['organizers-section','Organizers']].map(([id, label]) => (
             <button key={id} onClick={() => scrollTo(id)}
               className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide"
               data-testid={`nav-${id}`}>{label}</button>
           ))}
+          {/* Community - Disabled with Coming Soon badge */}
+          <div className="relative">
+            <button 
+              disabled
+              className="text-sm font-medium text-white/25 cursor-not-allowed tracking-wide"
+              data-testid="nav-community-section"
+            >
+              Community
+            </button>
+            <span className="absolute -top-2 -right-14 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+              COMING SOON
+            </span>
+          </div>
         </div>
 
         {/* CTA */}
@@ -75,9 +88,16 @@ export default function Navbar({ onAuthOpen }) {
             className="md:hidden glass-nav border-t border-white/5 px-4 py-4 space-y-3"
             data-testid="mobile-menu"
           >
-            {[['explore-section','Explore'],['create-events-section','Create'],['community-section','Community']].map(([id, label]) => (
+            {[['explore-section','Explore'],['create-events-section','Create']].map(([id, label]) => (
               <button key={id} onClick={() => scrollTo(id)} className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium">{label}</button>
             ))}
+            {/* Community - Disabled with Coming Soon badge */}
+            <div className="relative inline-block py-2">
+              <span className="text-white/25 text-sm font-medium cursor-not-allowed">Community</span>
+              <span className="ml-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase">
+                COMING SOON
+              </span>
+            </div>
             <div className="flex gap-2 pt-2">
               <button onClick={() => { onAuthOpen('login'); setMenuOpen(false); }} className="flex-1 btn-glass text-sm py-2.5" data-testid="mobile-signin-btn">Sign In</button>
               <button onClick={() => { onAuthOpen('register'); setMenuOpen(false); }} className="flex-1 btn-white text-sm py-2.5" data-testid="mobile-register-btn">Get Started</button>
