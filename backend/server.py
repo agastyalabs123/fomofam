@@ -98,6 +98,9 @@ class PasswordChangeRequest(BaseModel):
     current_password: str
     new_password: str
 
+class RolesUpdateRequest(BaseModel):
+    roles: List[str]
+
 class EventCreate(BaseModel):
     title: str
     description: str
@@ -271,6 +274,25 @@ async def get_user_events(request: Request):
     attended = []
     
     return {"created": created, "attended": attended}
+
+@api_router.put("/user/roles")
+async def update_user_roles(data: RolesUpdateRequest, request: Request):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    # Validate roles
+    valid_roles = ["attendee", "organizer", "sponsor"]
+    roles = [r for r in data.roles if r in valid_roles]
+    
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"roles": roles, "roles_selected": True}}
+    )
+    
+    updated_user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    updated_user.pop("password_hash", None)
+    return updated_user
 
 # --- Events Routes ---
 @api_router.get("/events")

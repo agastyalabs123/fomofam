@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthCallback from './pages/AuthCallback';
 import ProfilePage from './pages/ProfilePage';
 import ExplorePage from './pages/ExplorePage';
@@ -15,6 +15,7 @@ import ReputationSection from './components/ReputationSection';
 import EventTypesSection from './components/EventTypesSection';
 import Footer from './components/Footer';
 import AuthModal from './components/AuthModal';
+import RoleSelectionModal from './components/RoleSelectionModal';
 import './App.css';
 
 function LandingPage({ onAuthOpen }) {
@@ -36,12 +37,26 @@ function LandingPage({ onAuthOpen }) {
 function AppRouter() {
   const [showAuth, setShowAuth] = useState(false);
   const [authTab, setAuthTab] = useState('login');
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const location = useLocation();
+  const { user, setUser } = useAuth();
+
+  // Show role selection modal for new users who haven't selected roles
+  useEffect(() => {
+    if (user && !user.roles_selected && !user.roles?.length) {
+      setShowRoleModal(true);
+    }
+  }, [user]);
+
+  const openAuth = (tab = 'login') => { setAuthTab(tab); setShowAuth(true); };
+
+  const handleRoleComplete = (updatedUser) => {
+    setUser(updatedUser);
+    setShowRoleModal(false);
+  };
 
   // Handle Google Auth callback — REMINDER: DO NOT HARDCODE THE URL
   if (location.hash?.includes('session_id=')) return <AuthCallback />;
-
-  const openAuth = (tab = 'login') => { setAuthTab(tab); setShowAuth(true); };
 
   return (
     <>
@@ -52,6 +67,12 @@ function AppRouter() {
         <Route path="*" element={<LandingPage onAuthOpen={openAuth} />} />
       </Routes>
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />
+      <RoleSelectionModal 
+        isOpen={showRoleModal} 
+        onClose={() => setShowRoleModal(false)} 
+        onComplete={handleRoleComplete}
+        user={user}
+      />
     </>
   );
 }

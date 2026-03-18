@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, MapPin, Edit2, Lock, Save, X, ArrowLeft, Trophy, Star, Users, Ticket } from 'lucide-react';
+import { User, Mail, Calendar, Edit2, Lock, Save, X, ArrowLeft, Trophy, Star, Users, Ticket, Megaphone, HandCoins } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const ROLE_CONFIG = {
+  attendee: { label: 'Attendee', icon: Users, color: 'from-blue-500 to-blue-600' },
+  organizer: { label: 'Organizer', icon: Megaphone, color: 'from-purple-500 to-purple-600' },
+  sponsor: { label: 'Sponsor', icon: HandCoins, color: 'from-amber-500 to-amber-600' }
+};
 
 export default function ProfilePage({ onAuthOpen }) {
   const { user, setUser, loading } = useAuth();
@@ -139,14 +145,31 @@ export default function ProfilePage({ onAuthOpen }) {
                   {user.name}
                 </h1>
                 <p className="text-white/50 text-sm mb-3" data-testid="profile-email">{user.email}</p>
+                
+                {/* Role Tags */}
+                {user.roles?.length > 0 && (
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-3" data-testid="profile-roles">
+                    {user.roles.map(roleId => {
+                      const config = ROLE_CONFIG[roleId];
+                      if (!config) return null;
+                      const Icon = config.icon;
+                      return (
+                        <span 
+                          key={roleId}
+                          className={`px-3 py-1.5 rounded-full text-xs text-white font-medium flex items-center gap-1.5 bg-gradient-to-r ${config.color}`}
+                        >
+                          <Icon size={12} />
+                          {config.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                
                 <div className="flex flex-wrap justify-center sm:justify-start gap-3">
                   <span className="glass px-3 py-1.5 rounded-full text-xs text-white/70 flex items-center gap-1.5">
                     <Calendar size={12} />
                     Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                  </span>
-                  <span className="glass px-3 py-1.5 rounded-full text-xs text-white/70 capitalize flex items-center gap-1.5">
-                    <User size={12} />
-                    {user.role || 'Attendee'}
                   </span>
                 </div>
               </div>
