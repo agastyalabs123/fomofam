@@ -26,6 +26,22 @@ Build a cinematic, scroll-choreographed event discovery and management platform 
 - New section structure: Hero(Globe) → Explore → Create Events → Communities(Coming Soon) → For Organizers → Reputation → Event Types → Footer
 - Communities section with "Coming Soon" glassmorphism badge + "Launching Q2 2026" label
 - CreateEventsSection merged with HowItWorks + EventDetail into one powerful section
+- Community button in navbar disabled with red "COMING SOON" badge
+
+### Profile Page (March 2026)
+- ✅ Full profile page at /profile route (protected, login required)
+- ✅ Circular profile avatar button in navbar (logged-in users only)
+- ✅ Profile header with avatar, name, email, join date, role badge
+- ✅ Three tabs: Profile, My Events, Settings
+- ✅ Profile tab: Personal information display + edit functionality
+- ✅ Reputation Stats section with "COMING SOON" badge (placeholder for future)
+- ✅ My Events tab: Events created and attended by user
+- ✅ Settings tab: Change password form (disabled for Google OAuth users)
+- ✅ Backend APIs: PUT /api/user/profile, PUT /api/user/password, GET /api/user/events
+
+### Bug Fixes (March 2026)
+- ✅ Fixed auth modal centering (was appearing at bottom/side)
+- ✅ Fixed Leaflet map z-index (was appearing over auth modal)
 
 ### Backend (`/app/backend/server.py`)
 - ✅ JWT auth: POST /api/auth/register, /api/auth/login, /api/auth/logout
@@ -68,8 +84,8 @@ Build a cinematic, scroll-choreographed event discovery and management platform 
 ## Prioritized Backlog
 
 ### P0 (Critical for launch)
+- [x] User profile page with personal info, event history, settings
 - [ ] Event creation flow (authenticated form)
-- [ ] User dashboard with attended/created events
 - [ ] Reputation score display on profile
 
 ### P1 (Important)

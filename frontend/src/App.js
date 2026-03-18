@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/AuthCallback';
+import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import ExploreSection from './components/ExploreSection';
@@ -43,6 +44,7 @@ function AppRouter() {
   return (
     <>
       <Routes>
+        <Route path="/profile" element={<ProfilePage onAuthOpen={openAuth} />} />
         <Route path="*" element={<LandingPage onAuthOpen={openAuth} />} />
       </Routes>
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />

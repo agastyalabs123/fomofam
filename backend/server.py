@@ -90,6 +90,14 @@ class GoogleCallbackRequest(BaseModel):
 class WaitlistRequest(BaseModel):
     email: str
 
+class ProfileUpdateRequest(BaseModel):
+    name: str
+    email: str
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 class EventCreate(BaseModel):
     title: str
     description: str
@@ -205,6 +213,64 @@ async def logout(request: Request, response: Response):
         await db.user_sessions.delete_one({"session_token": token})
     response.delete_cookie("session_token", path="/", samesite="none", secure=True)
     return {"message": "Logged out"}
+
+# --- User Profile Routes ---
+@api_router.put("/user/profile")
+async def update_profile(data: ProfileUpdateRequest, request: Request):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    # Check if email is being changed and if it's already taken
+    if data.email != user["email"]:
+        existing = await db.users.find_one({"email": data.email, "user_id": {"$ne": user["user_id"]}}, {"_id": 0})
+        if existing:
+            raise HTTPException(400, "Email already in use")
+    
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"name": data.name, "email": data.email}}
+    )
+    
+    updated_user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    updated_user.pop("password_hash", None)
+    return updated_user
+
+@api_router.put("/user/password")
+async def change_password(data: PasswordChangeRequest, request: Request):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    if user.get("auth_provider") == "google":
+        raise HTTPException(400, "Cannot change password for Google accounts")
+    
+    # Verify current password
+    full_user = await db.users.find_one({"user_id": user["user_id"]})
+    if not verify_password(data.current_password, full_user.get("password_hash", "")):
+        raise HTTPException(400, "Current password is incorrect")
+    
+    # Update password
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"password_hash": hash_password(data.new_password)}}
+    )
+    
+    return {"message": "Password updated successfully"}
+
+@api_router.get("/user/events")
+async def get_user_events(request: Request):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    # Get events created by user
+    created = await db.events.find({"organizer_id": user["user_id"]}, {"_id": 0}).to_list(50)
+    
+    # Get events attended by user (for now return empty, would need event_attendees collection)
+    attended = []
+    
+    return {"created": created, "attended": attended}
 
 # --- Events Routes ---
 @api_router.get("/events")

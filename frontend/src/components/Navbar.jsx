@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +8,7 @@ export default function Navbar({ onAuthOpen }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 30);
@@ -62,7 +64,17 @@ export default function Navbar({ onAuthOpen }) {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-white/60">Hi, {user.name?.split(' ')[0]}</span>
+              <button
+                onClick={() => navigate('/profile')}
+                className="w-10 h-10 rounded-full border-2 border-white/20 hover:border-white/40 overflow-hidden transition-all hover:scale-105"
+                data-testid="profile-btn"
+              >
+                <img
+                  src={user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_id}`}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              </button>
               <button onClick={logout} className="btn-glass text-sm py-2 px-5" data-testid="logout-btn">Log out</button>
             </div>
           ) : (
@@ -99,8 +111,28 @@ export default function Navbar({ onAuthOpen }) {
               </span>
             </div>
             <div className="flex gap-2 pt-2">
-              <button onClick={() => { onAuthOpen('login'); setMenuOpen(false); }} className="flex-1 btn-glass text-sm py-2.5" data-testid="mobile-signin-btn">Sign In</button>
-              <button onClick={() => { onAuthOpen('register'); setMenuOpen(false); }} className="flex-1 btn-white text-sm py-2.5" data-testid="mobile-register-btn">Get Started</button>
+              {user ? (
+                <>
+                  <button 
+                    onClick={() => { navigate('/profile'); setMenuOpen(false); }} 
+                    className="flex-1 btn-glass text-sm py-2.5 flex items-center justify-center gap-2" 
+                    data-testid="mobile-profile-btn"
+                  >
+                    <img
+                      src={user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.user_id}`}
+                      alt={user.name}
+                      className="w-5 h-5 rounded-full"
+                    />
+                    Profile
+                  </button>
+                  <button onClick={() => { logout(); setMenuOpen(false); }} className="flex-1 btn-white text-sm py-2.5" data-testid="mobile-logout-btn">Log out</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => { onAuthOpen('login'); setMenuOpen(false); }} className="flex-1 btn-glass text-sm py-2.5" data-testid="mobile-signin-btn">Sign In</button>
+                  <button onClick={() => { onAuthOpen('register'); setMenuOpen(false); }} className="flex-1 btn-white text-sm py-2.5" data-testid="mobile-register-btn">Get Started</button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
