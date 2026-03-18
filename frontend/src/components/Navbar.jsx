@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,10 @@ export default function Navbar({ onAuthOpen }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user is logged in via Google
+  const isGoogleUser = user?.auth_provider === 'google';
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 30);
@@ -16,8 +20,8 @@ export default function Navbar({ onAuthOpen }) {
     return () => window.removeEventListener('scroll', handle);
   }, []);
 
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const goHome = () => {
+    navigate('/');
     setMenuOpen(false);
   };
 
@@ -31,34 +35,45 @@ export default function Navbar({ onAuthOpen }) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2.5 group" data-testid="navbar-logo">
+        <button onClick={goHome} className="flex items-center gap-2.5 group" data-testid="navbar-logo">
           <div className="w-8 h-8 rounded-xl glass-strong flex items-center justify-center group-hover:scale-110 transition-transform">
             <Zap size={15} className="text-white" fill="white" />
           </div>
           <span className="font-display font-bold text-lg text-white tracking-tight">FomoFam</span>
         </button>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-7">
-          {[['explore-section','Explore'],['create-events-section','Create'],['organizers-section','Organizers']].map(([id, label]) => (
-            <button key={id} onClick={() => scrollTo(id)}
-              className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide"
-              data-testid={`nav-${id}`}>{label}</button>
-          ))}
-          {/* Community - Disabled with Coming Soon badge */}
-          <div className="relative">
+        {/* Desktop links - Only visible for Google OAuth users */}
+        {isGoogleUser && (
+          <div className="hidden md:flex items-center gap-7">
             <button 
-              disabled
-              className="text-sm font-medium text-white/25 cursor-not-allowed tracking-wide"
-              data-testid="nav-community-section"
+              onClick={() => navigate('/explore')}
+              className={`text-sm font-medium transition-colors tracking-wide ${location.pathname === '/explore' ? 'text-white' : 'text-white/50 hover:text-white'}`}
+              data-testid="nav-explore"
             >
-              Community
+              Explore
             </button>
-            <span className="absolute -top-2 -right-14 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-              COMING SOON
-            </span>
+            <button 
+              onClick={() => navigate('/create')}
+              className={`text-sm font-medium transition-colors tracking-wide ${location.pathname === '/create' ? 'text-white' : 'text-white/50 hover:text-white'}`}
+              data-testid="nav-create"
+            >
+              Create
+            </button>
+            {/* Community - Disabled with Coming Soon badge */}
+            <div className="relative">
+              <button 
+                disabled
+                className="text-sm font-medium text-white/25 cursor-not-allowed tracking-wide"
+                data-testid="nav-community"
+              >
+                Community
+              </button>
+              <span className="absolute -top-2 -right-14 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                COMING SOON
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
@@ -100,16 +115,30 @@ export default function Navbar({ onAuthOpen }) {
             className="md:hidden glass-nav border-t border-white/5 px-4 py-4 space-y-3"
             data-testid="mobile-menu"
           >
-            {[['explore-section','Explore'],['create-events-section','Create']].map(([id, label]) => (
-              <button key={id} onClick={() => scrollTo(id)} className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium">{label}</button>
-            ))}
-            {/* Community - Disabled with Coming Soon badge */}
-            <div className="relative inline-block py-2">
-              <span className="text-white/25 text-sm font-medium cursor-not-allowed">Community</span>
-              <span className="ml-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase">
-                COMING SOON
-              </span>
-            </div>
+            {/* Nav links - Only for Google OAuth users */}
+            {isGoogleUser && (
+              <>
+                <button 
+                  onClick={() => { navigate('/explore'); setMenuOpen(false); }} 
+                  className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium"
+                >
+                  Explore
+                </button>
+                <button 
+                  onClick={() => { navigate('/create'); setMenuOpen(false); }} 
+                  className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium"
+                >
+                  Create
+                </button>
+                {/* Community - Disabled with Coming Soon badge */}
+                <div className="relative inline-block py-2">
+                  <span className="text-white/25 text-sm font-medium cursor-not-allowed">Community</span>
+                  <span className="ml-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase">
+                    COMING SOON
+                  </span>
+                </div>
+              </>
+            )}
             <div className="flex gap-2 pt-2">
               {user ? (
                 <>
