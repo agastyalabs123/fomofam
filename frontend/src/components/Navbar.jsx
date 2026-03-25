@@ -11,8 +11,8 @@ export default function Navbar({ onAuthOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if user is logged in via Google
-  const isGoogleUser = user?.auth_provider === 'google';
+  // Check if user is logged in
+  const isLoggedIn = !!user;
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 30);
@@ -42,8 +42,8 @@ export default function Navbar({ onAuthOpen }) {
           <span className="font-display font-bold text-lg text-white tracking-tight">FomoFam</span>
         </button>
 
-        {/* Desktop links - Only visible for Google OAuth users */}
-        {isGoogleUser && (
+        {/* Desktop links - Only visible for logged-in users */}
+        {isLoggedIn && (
           <div className="hidden md:flex items-center gap-7">
             <button 
               onClick={() => navigate('/explore')}
@@ -115,8 +115,8 @@ export default function Navbar({ onAuthOpen }) {
             className="md:hidden glass-nav border-t border-white/5 px-4 py-4 space-y-3"
             data-testid="mobile-menu"
           >
-            {/* Nav links - Only for Google OAuth users */}
-            {isGoogleUser && (
+            {/* Nav links - Only for logged-in users */}
+            {isLoggedIn && (
               <>
                 <button 
                   onClick={() => { navigate('/explore'); setMenuOpen(false); }} 

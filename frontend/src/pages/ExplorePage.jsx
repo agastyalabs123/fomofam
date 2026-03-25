@@ -10,7 +10,7 @@ export default function ExplorePage({ onAuthOpen }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && (!user || user.auth_provider !== 'google')) {
+    if (!loading && !user) {
       navigate('/');
     }
   }, [user, loading, navigate]);
@@ -23,7 +23,7 @@ export default function ExplorePage({ onAuthOpen }) {
     );
   }
 
-  if (!user || user.auth_provider !== 'google') return null;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">

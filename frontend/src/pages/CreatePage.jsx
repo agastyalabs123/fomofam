@@ -35,7 +35,7 @@ export default function CreatePage({ onAuthOpen }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.auth_provider !== 'google')) {
+    if (!loading && !user) {
       navigate('/');
     }
   }, [user, loading, navigate]);
@@ -106,7 +106,7 @@ export default function CreatePage({ onAuthOpen }) {
     );
   }
 
-  if (!user || user.auth_provider !== 'google') return null;
+  if (!user) return null;
 
   const showFundingField = form.event_type === 'crowdfunded' || form.event_type === 'sponsored';
 
