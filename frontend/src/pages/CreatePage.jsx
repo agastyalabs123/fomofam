@@ -8,12 +8,6 @@ import Navbar from '../components/Navbar';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const EVENT_TYPES = [
-  { id: 'normal', label: 'Open Event', description: 'Free registration, anyone can join (like Luma)' },
-  { id: 'crowdfunded', label: 'Crowdfunded', description: 'Community-funded event with milestone goals' },
-  { id: 'sponsored', label: 'Sponsored', description: 'Looking for sponsors to fund this event' }
-];
-
 const REGIONS = [
   'North America', 'South America', 'Europe', 'Asia', 'Africa', 'Oceania', 'Middle East', 'Online / Virtual'
 ];
@@ -209,35 +203,19 @@ export default function CreatePage({ onAuthOpen }) {
                   <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
                     <ChevronDown size={14} /> Event Type <span className="text-red-400">*</span>
                   </label>
-                  <div className="space-y-2">
-                    {EVENT_TYPES.map((type) => (
-                      <button
-                        key={type.id}
-                        type="button"
-                        onClick={() => setForm(prev => ({ ...prev, event_type: type.id }))}
-                        className={`w-full p-4 rounded-xl border text-left transition-all ${
-                          form.event_type === type.id
-                            ? 'bg-white/10 border-white/30'
-                            : 'bg-white/5 border-white/10 hover:border-white/20'
-                        }`}
-                        data-testid={`event-type-${type.id}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-white text-sm">{type.label}</p>
-                            <p className="text-white/40 text-xs mt-0.5">{type.description}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            form.event_type === type.id ? 'border-white bg-white' : 'border-white/30'
-                          }`}>
-                            {form.event_type === type.id && (
-                              <div className="w-2 h-2 rounded-full bg-black" />
-                            )}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  <select
+                    name="event_type"
+                    value={form.event_type}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/25 transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1rem' }}
+                    data-testid="create-event-type-select"
+                  >
+                    <option value="" className="bg-[#1a1a1a]">Select event type</option>
+                    <option value="normal" className="bg-[#1a1a1a]">Open Event - Free registration, anyone can join</option>
+                    <option value="crowdfunded" className="bg-[#1a1a1a]">Crowdfunded - Community-funded with milestone goals</option>
+                    <option value="sponsored" className="bg-[#1a1a1a]">Sponsored - Looking for sponsors to fund</option>
+                  </select>
                 </div>
 
                 {/* Funding Goal - Conditional */}
