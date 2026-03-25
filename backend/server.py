@@ -116,6 +116,16 @@ class EventCreate(BaseModel):
     funding_goal: float = 0
     image_url: str = ""
 
+class EventCreateNew(BaseModel):
+    title: str
+    description: str
+    event_type: str  # 'normal', 'crowdfunded', 'sponsored'
+    funding_goal: Optional[float] = 0
+    region: str
+    luma_link: Optional[str] = None
+    attendee_limit: Optional[int] = None
+    date: Optional[str] = None
+
 # --- Auth Routes ---
 @api_router.post("/auth/register")
 async def register(data: RegisterRequest, response: Response):
@@ -323,6 +333,35 @@ async def create_event(data: EventCreate, request: Request):
         "attendee_count": 0, "funding_raised": 0,
         "milestones": [], "organizer_id": user["user_id"],
         "organizer_name": user["name"], "organizer_avatar": user.get("picture", ""),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.events.insert_one(event_doc)
+    event_doc.pop("_id", None)
+    return event_doc
+
+@api_router.post("/events/create")
+async def create_event_new(data: EventCreateNew, request: Request):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    event_id = f"evt_{uuid.uuid4().hex[:8]}"
+    event_doc = {
+        "event_id": event_id,
+        "title": data.title,
+        "description": data.description,
+        "event_type": data.event_type,
+        "funding_goal": data.funding_goal or 0,
+        "funding_raised": 0,
+        "region": data.region,
+        "luma_link": data.luma_link,
+        "attendee_limit": data.attendee_limit,
+        "attendee_count": 0,
+        "date": data.date,
+        "organizer_id": user["user_id"],
+        "organizer_name": user["name"],
+        "organizer_avatar": user.get("picture", ""),
+        "status": "draft",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.events.insert_one(event_doc)

@@ -1,19 +1,104 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, PlusCircle, Rocket } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, DollarSign, Link2, FileText, ChevronDown, Sparkles } from 'lucide-react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const EVENT_TYPES = [
+  { id: 'normal', label: 'Open Event', description: 'Free registration, anyone can join (like Luma)' },
+  { id: 'crowdfunded', label: 'Crowdfunded', description: 'Community-funded event with milestone goals' },
+  { id: 'sponsored', label: 'Sponsored', description: 'Looking for sponsors to fund this event' }
+];
+
+const REGIONS = [
+  'North America', 'South America', 'Europe', 'Asia', 'Africa', 'Oceania', 'Middle East', 'Online / Virtual'
+];
 
 export default function CreatePage({ onAuthOpen }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    event_type: '',
+    funding_goal: '',
+    region: '',
+    luma_link: '',
+    attendee_limit: '',
+    date: ''
+  });
 
   useEffect(() => {
     if (!loading && (!user || user.auth_provider !== 'google')) {
       navigate('/');
     }
   }, [user, loading, navigate]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!form.title || !form.description || !form.event_type || !form.region) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    if ((form.event_type === 'crowdfunded' || form.event_type === 'sponsored') && !form.funding_goal) {
+      setError('Please enter a funding goal');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const payload = {
+        title: form.title,
+        description: form.description,
+        event_type: form.event_type,
+        funding_goal: parseFloat(form.funding_goal) || 0,
+        region: form.region,
+        luma_link: form.luma_link || null,
+        attendee_limit: parseInt(form.attendee_limit) || null,
+        date: form.date || null
+      };
+
+      await axios.post(`${API}/events/create`, payload, { withCredentials: true });
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to create event');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      title: '',
+      description: '',
+      event_type: '',
+      funding_goal: '',
+      region: '',
+      luma_link: '',
+      attendee_limit: '',
+      date: ''
+    });
+    setSuccess(false);
+    setError('');
+  };
 
   if (loading) {
     return (
@@ -25,74 +110,270 @@ export default function CreatePage({ onAuthOpen }) {
 
   if (!user || user.auth_provider !== 'google') return null;
 
+  const showFundingField = form.event_type === 'crowdfunded' || form.event_type === 'sponsored';
+
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <Navbar onAuthOpen={onAuthOpen} />
       
-      <div className="pt-24 pb-16 px-4 min-h-screen flex items-center justify-center">
-        <div className="max-w-lg mx-auto text-center">
+      <div className="pt-24 pb-16 px-4">
+        <div className="max-w-2xl mx-auto">
+          {/* Back button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white/50 hover:text-white mb-12 transition-colors mx-auto"
+            className="flex items-center gap-2 text-white/50 hover:text-white mb-8 transition-colors"
             data-testid="back-to-home"
           >
             <ArrowLeft size={18} />
             <span className="text-sm font-medium">Back to Home</span>
           </motion.button>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-8"
+          {/* Header */}
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.6 }} 
+            className="mb-10"
           >
-            <div className="w-24 h-24 mx-auto glass-strong rounded-3xl flex items-center justify-center">
-              <PlusCircle size={40} className="text-white/60" />
-            </div>
+            <span className="text-xs font-medium text-white/35 uppercase tracking-[0.2em] font-body block mb-3">Create Event</span>
+            <h1 className="font-display font-black text-4xl sm:text-5xl text-white tracking-tight mb-4">
+              Launch Your <span className="text-gradient">Event</span>
+            </h1>
+            <p className="text-white/45 font-body text-base">Create a community-powered event. Fill in the details below.</p>
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-display font-black text-4xl sm:text-5xl text-white tracking-tight mb-4"
-          >
-            Create
-          </motion.h1>
+          {success ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-card p-8 text-center"
+              data-testid="create-success"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Sparkles size={28} className="text-green-400" />
+              </div>
+              <h2 className="font-display font-bold text-2xl text-white mb-2">Event Created!</h2>
+              <p className="text-white/50 mb-6">Your event has been submitted successfully.</p>
+              <div className="flex gap-3 justify-center">
+                <button onClick={() => navigate('/')} className="btn-white py-3 px-6 text-sm">
+                  Back to Home
+                </button>
+                <button onClick={resetForm} className="btn-glass py-3 px-6 text-sm">
+                  Create Another
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card p-6 sm:p-8"
+            >
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Event Name */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <FileText size={14} /> Event Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    name="title"
+                    type="text"
+                    placeholder="e.g., Seoul Web3 Builder Meetup"
+                    value={form.title}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/25 text-sm focus:outline-none focus:border-white/25 transition-all"
+                    data-testid="create-title-input"
+                  />
+                </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-white/50 font-body text-lg mb-6"
-          >
-            We're still teaching our hamsters to code... 
-            <br />
-            <span className="text-white/70">Event creation coming very soon!</span>
-          </motion.p>
+                {/* Event Description */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2">
+                    Event Description <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    placeholder="What's your event about? What can attendees expect?"
+                    value={form.description}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/25 text-sm focus:outline-none focus:border-white/25 transition-all resize-none"
+                    data-testid="create-description-input"
+                  />
+                </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 glass px-5 py-3 rounded-full"
-          >
-            <Rocket size={16} className="text-blue-400" />
-            <span className="text-white/70 text-sm font-medium">Launching soon — get ready to create magic!</span>
-          </motion.div>
+                {/* Event Type Dropdown */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <ChevronDown size={14} /> Event Type <span className="text-red-400">*</span>
+                  </label>
+                  <div className="space-y-2">
+                    {EVENT_TYPES.map((type) => (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, event_type: type.id }))}
+                        className={`w-full p-4 rounded-xl border text-left transition-all ${
+                          form.event_type === type.id
+                            ? 'bg-white/10 border-white/30'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                        data-testid={`event-type-${type.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-white text-sm">{type.label}</p>
+                            <p className="text-white/40 text-xs mt-0.5">{type.description}</p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            form.event_type === type.id ? 'border-white bg-white' : 'border-white/30'
+                          }`}>
+                            {form.event_type === type.id && (
+                              <div className="w-2 h-2 rounded-full bg-black" />
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-16 flex justify-center gap-3"
-          >
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="w-2 h-2 rounded-full bg-white/20" />
-            ))}
-          </motion.div>
+                {/* Funding Goal - Conditional */}
+                {showFundingField && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                      <DollarSign size={14} /> 
+                      {form.event_type === 'crowdfunded' ? 'Crowdfunding Goal' : 'Sponsorship Amount Needed'} 
+                      <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">$</span>
+                      <input
+                        name="funding_goal"
+                        type="number"
+                        placeholder="5000"
+                        value={form.funding_goal}
+                        onChange={handleChange}
+                        min={0}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-8 pr-4 py-3.5 text-white placeholder-white/25 text-sm focus:outline-none focus:border-white/25 transition-all"
+                        data-testid="create-funding-input"
+                      />
+                    </div>
+                    <p className="text-xs text-white/30 mt-1">
+                      {form.event_type === 'crowdfunded' 
+                        ? 'Amount you want to raise from the community' 
+                        : 'Amount you\'re seeking from sponsors'}
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Region */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <MapPin size={14} /> Region <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    name="region"
+                    value={form.region}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/25 transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1rem' }}
+                    data-testid="create-region-select"
+                  >
+                    <option value="" className="bg-[#1a1a1a]">Select region</option>
+                    {REGIONS.map(region => (
+                      <option key={region} value={region} className="bg-[#1a1a1a]">{region}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Date */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <Calendar size={14} /> Event Date <span className="text-white/30">(optional)</span>
+                  </label>
+                  <input
+                    name="date"
+                    type="datetime-local"
+                    value={form.date}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/25 transition-all"
+                    data-testid="create-date-input"
+                  />
+                </div>
+
+                {/* Luma Link */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <Link2 size={14} /> Luma Link <span className="text-white/30">(optional)</span>
+                  </label>
+                  <input
+                    name="luma_link"
+                    type="url"
+                    placeholder="https://lu.ma/your-event"
+                    value={form.luma_link}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/25 text-sm focus:outline-none focus:border-white/25 transition-all"
+                    data-testid="create-luma-input"
+                  />
+                  <p className="text-xs text-white/30 mt-1">Already have a Luma event? Add the link here</p>
+                </div>
+
+                {/* Attendee Limit */}
+                <div>
+                  <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
+                    <Users size={14} /> Attendee Limit <span className="text-white/30">(optional)</span>
+                  </label>
+                  <input
+                    name="attendee_limit"
+                    type="number"
+                    placeholder="100"
+                    value={form.attendee_limit}
+                    onChange={handleChange}
+                    min={1}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/25 text-sm focus:outline-none focus:border-white/25 transition-all"
+                    data-testid="create-limit-input"
+                  />
+                  <p className="text-xs text-white/30 mt-1">Leave empty for unlimited attendees</p>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm"
+                    data-testid="create-error"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full btn-white py-4 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="create-submit-btn"
+                >
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                      Creating Event...
+                    </span>
+                  ) : (
+                    'Create Event'
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>
