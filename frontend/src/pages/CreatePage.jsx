@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, MapPin, Users, DollarSign, Link2, FileText, ChevronDown, Sparkles } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, MapPin, Users, DollarSign, Link2, FileText, ChevronDown, Sparkles } from 'lucide-react';
+import { format } from 'date-fns';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import { Calendar } from '../components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -26,9 +29,10 @@ export default function CreatePage({ onAuthOpen }) {
     funding_goal: '',
     region: '',
     luma_link: '',
-    attendee_limit: '',
-    date: ''
+    attendee_limit: ''
   });
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || user.auth_provider !== 'google')) {
@@ -67,7 +71,7 @@ export default function CreatePage({ onAuthOpen }) {
         region: form.region,
         luma_link: form.luma_link || null,
         attendee_limit: parseInt(form.attendee_limit) || null,
-        date: form.date || null
+        date: selectedDate ? selectedDate.toISOString() : null
       };
 
       await axios.post(`${API}/events/create`, payload, { withCredentials: true });
@@ -87,9 +91,9 @@ export default function CreatePage({ onAuthOpen }) {
       funding_goal: '',
       region: '',
       luma_link: '',
-      attendee_limit: '',
-      date: ''
+      attendee_limit: ''
     });
+    setSelectedDate(null);
     setSuccess(false);
     setError('');
   };
@@ -274,16 +278,34 @@ export default function CreatePage({ onAuthOpen }) {
                 {/* Date */}
                 <div>
                   <label className="block text-sm text-white/60 mb-2 flex items-center gap-2">
-                    <Calendar size={14} /> Event Date <span className="text-white/30">(optional)</span>
+                    <CalendarIcon size={14} /> Event Date <span className="text-white/30">(optional)</span>
                   </label>
-                  <input
-                    name="date"
-                    type="datetime-local"
-                    value={form.date}
-                    onChange={handleChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/25 transition-all"
-                    data-testid="create-date-input"
-                  />
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-left text-sm focus:outline-none focus:border-white/25 transition-all flex items-center justify-between"
+                        data-testid="create-date-input"
+                      >
+                        <span className={selectedDate ? 'text-white' : 'text-white/25'}>
+                          {selectedDate ? format(selectedDate, 'PPP') : 'Pick a date'}
+                        </span>
+                        <CalendarIcon size={16} className="text-white/40" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-[#1a1a1a] border-white/10" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          setSelectedDate(date);
+                          setCalendarOpen(false);
+                        }}
+                        initialFocus
+                        className="bg-[#1a1a1a] text-white"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Luma Link */}
