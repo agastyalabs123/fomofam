@@ -7,6 +7,7 @@ import os
 import logging
 import uuid
 import httpx
+import json
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -24,6 +25,7 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-secret')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 7
+TINYFISH_API_KEY = os.environ.get('TINYFISH_API_KEY', '')
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -397,6 +399,97 @@ async def join_waitlist(data: WaitlistRequest):
 @api_router.get("/health")
 async def health():
     return {"status": "ok"}
+
+# --- AI Concierge: Event Scraping ---
+EVENT_SOURCES = [
+    {"id": "solana", "name": "Solana Events", "url": "https://solana.com/events"},
+    {"id": "cryptonomads", "name": "Crypto Nomads", "url": "https://cryptonomads.org/"},
+    {"id": "ethglobal", "name": "ETH Global", "url": "https://ethglobal.com/events"},
+]
+
+SCRAPE_GOAL = "Extract all events listed on this page. For each event return: event_name, event_description, start_date, end_date (if different from start date, otherwise null), event_time, event_location. Return as a JSON array."
+
+async def scrape_events_from_source(source_url: str):
+    """Scrape events from a single source using TinyFish API"""
+    if not TINYFISH_API_KEY:
+        return {"error": "TinyFish API key not configured"}
+    
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as http_client:
+            response = await http_client.post(
+                "https://agent.tinyfish.ai/v1/automation/run-sse",
+                headers={
+                    "X-API-Key": TINYFISH_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "url": source_url,
+                    "goal": SCRAPE_GOAL,
+                }
+            )
+            
+            # Parse SSE response
+            result = None
+            for line in response.text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        event = json.loads(line[6:])
+                        if event.get('type') == 'COMPLETE':
+                            result = event.get('result')
+                            break
+                    except json.JSONDecodeError:
+                        continue
+            
+            return result
+    except Exception as e:
+        logger.error(f"Error scraping {source_url}: {str(e)}")
+        return {"error": str(e)}
+
+@api_router.get("/ai-concierge/events")
+async def get_ai_concierge_events():
+    """Get cached scraped events or return empty if not yet scraped"""
+    cached = await db.scraped_events.find_one({"_id": "latest"}, {"_id": 0})
+    if cached:
+        return cached
+    return {"solana": [], "cryptonomads": [], "ethglobal": [], "last_updated": None}
+
+@api_router.post("/ai-concierge/scrape")
+async def scrape_all_events(request: Request):
+    """Trigger scraping of all event sources"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    
+    if not TINYFISH_API_KEY:
+        raise HTTPException(500, "TinyFish API key not configured")
+    
+    results = {}
+    
+    # Scrape each source
+    for source in EVENT_SOURCES:
+        logger.info(f"Scraping events from {source['name']}...")
+        result = await scrape_events_from_source(source['url'])
+        results[source['id']] = result if result else []
+    
+    # Cache results in database
+    await db.scraped_events.update_one(
+        {"_id": "latest"},
+        {"$set": {
+            **results,
+            "last_updated": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {
+        **results,
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.get("/ai-concierge/sources")
+async def get_event_sources():
+    """Get list of event sources"""
+    return EVENT_SOURCES
 
 app.include_router(api_router)
 
