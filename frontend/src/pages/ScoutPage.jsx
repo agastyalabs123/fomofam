@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Briefcase, Calendar, MapPin, Plus, X, RefreshCw, Target, Globe, Search, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, Calendar, MapPin, Plus, X, RefreshCw, Target, Globe, Search, Zap, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+
+const ACCESS_CODE = 'FOMOFAM123';
+const SCOUT_ACCESS_KEY = 'fomofam_scout_access';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -25,6 +28,19 @@ export default function ScoutPage({ onAuthOpen }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('events');
+  const [hasAccess, setHasAccess] = useState(() => sessionStorage.getItem(SCOUT_ACCESS_KEY) === 'true');
+  const [accessCode, setAccessCode] = useState('');
+  const [accessError, setAccessError] = useState('');
+
+  const handleAccessSubmit = () => {
+    if (accessCode.trim() === ACCESS_CODE) {
+      sessionStorage.setItem(SCOUT_ACCESS_KEY, 'true');
+      setHasAccess(true);
+      setAccessError('');
+    } else {
+      setAccessError('Invalid access code. Please try again.');
+    }
+  };
 
   // Event Concierge state
   const [eventSources, setEventSources] = useState(DEFAULT_EVENT_SOURCES);
@@ -175,6 +191,63 @@ export default function ScoutPage({ onAuthOpen }) {
     );
   }
   if (!user) return null;
+
+  // Access code gate
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A]">
+        <Navbar onAuthOpen={onAuthOpen} />
+        <div className="fixed inset-0 z-40 flex items-center justify-center px-4 bg-[#0A0A0A]/95 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="glass-card border border-white/10 rounded-3xl p-8 w-full max-w-sm text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <Lock size={28} className="text-white/60" />
+            </div>
+            <h2 className="font-display font-black text-2xl text-white tracking-tight mb-2">Scout Access</h2>
+            <p className="text-white/40 text-sm font-body mb-6">
+              This section is invite-only. Enter your access code to continue.
+            </p>
+
+            <input
+              type="text"
+              placeholder="Enter access code"
+              value={accessCode}
+              onChange={(e) => { setAccessCode(e.target.value.toUpperCase()); setAccessError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleAccessSubmit()}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm text-center placeholder-white/25 focus:outline-none focus:border-white/30 tracking-widest font-mono mb-3"
+              data-testid="scout-access-code-input"
+              autoFocus
+            />
+
+            {accessError && (
+              <p className="text-red-400 text-xs mb-3" data-testid="scout-access-error">{accessError}</p>
+            )}
+
+            <button
+              onClick={handleAccessSubmit}
+              disabled={!accessCode.trim()}
+              className="w-full py-3.5 rounded-xl bg-white text-black font-display font-semibold text-sm hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all mb-4"
+              data-testid="scout-access-submit-btn"
+            >
+              Unlock Scout
+            </button>
+
+            <button
+              onClick={() => navigate('/')}
+              className="text-white/30 text-xs hover:text-white/60 transition-colors"
+              data-testid="scout-access-back-btn"
+            >
+              Back to Home
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
