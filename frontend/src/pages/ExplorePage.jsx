@@ -52,8 +52,40 @@ export default function ExplorePage({ onAuthOpen }) {
     setScraping(true);
     setError('');
     try {
-      const res = await axios.post(`${API}/ai-concierge/scrape`, {}, { withCredentials: true });
-      setEvents(res.data);
+      // Start scraping in background
+      const startRes = await axios.post(`${API}/ai-concierge/scrape`, {}, { withCredentials: true });
+      
+      if (startRes.data.status === 'already_scraping') {
+        // Already scraping, just poll for results
+      } else if (startRes.data.status === 'started') {
+        // Started, poll for completion
+      }
+      
+      // Poll for completion
+      let attempts = 0;
+      const maxAttempts = 60; // 2 minutes max
+      
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        
+        const statusRes = await axios.get(`${API}/ai-concierge/status`);
+        
+        if (statusRes.data.status === 'complete') {
+          // Fetch the results
+          const eventsRes = await axios.get(`${API}/ai-concierge/events`);
+          setEvents(eventsRes.data);
+          break;
+        } else if (statusRes.data.status === 'error') {
+          setError('Scraping failed: ' + (statusRes.data.error || 'Unknown error'));
+          break;
+        }
+        
+        attempts++;
+      }
+      
+      if (attempts >= maxAttempts) {
+        setError('Scraping is taking too long. Please check back later.');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to fetch events. Please try again.');
     } finally {
@@ -70,16 +102,21 @@ export default function ExplorePage({ onAuthOpen }) {
     if (Array.isArray(data)) return data;
     if (typeof data === 'string') {
       try {
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed.events) return parsed.events;
+        return [];
       } catch {
         return [];
       }
     }
-    if (data.events) return data.events;
+    if (data.events && Array.isArray(data.events)) return data.events;
     return [];
   };
 
-  const hasEvents = events.solana?.length > 0 || events.cryptonomads?.length > 0 || events.ethglobal?.length > 0;
+  const hasEvents = parseEvents(events.solana).length > 0 || 
+                    parseEvents(events.cryptonomads).length > 0 || 
+                    parseEvents(events.ethglobal).length > 0;
 
   if (loading) {
     return (

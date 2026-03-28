@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -450,41 +450,75 @@ async def get_ai_concierge_events():
     """Get cached scraped events or return empty if not yet scraped"""
     cached = await db.scraped_events.find_one({"_id": "latest"}, {"_id": 0})
     if cached:
+        # Reset scrape status to complete if we have data
+        await db.scrape_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "complete"}},
+            upsert=True
+        )
         return cached
     return {"solana": [], "cryptonomads": [], "ethglobal": [], "last_updated": None}
 
 @api_router.post("/ai-concierge/scrape")
-async def scrape_all_events(request: Request):
-    """Trigger scraping of all event sources"""
-    user = await get_current_user(request)
-    if not user:
-        raise HTTPException(401, "Not authenticated")
-    
+async def scrape_all_events(request: Request, background_tasks: BackgroundTasks):
+    """Trigger scraping of all event sources (runs in background)"""
     if not TINYFISH_API_KEY:
         raise HTTPException(500, "TinyFish API key not configured")
     
-    results = {}
+    # Check if already scraping
+    status = await db.scrape_status.find_one({"_id": "current"})
+    if status and status.get("status") == "scraping":
+        return {"status": "already_scraping", "message": "Scraping is already in progress"}
     
-    # Scrape each source
-    for source in EVENT_SOURCES:
-        logger.info(f"Scraping events from {source['name']}...")
-        result = await scrape_events_from_source(source['url'])
-        results[source['id']] = result if result else []
-    
-    # Cache results in database
-    await db.scraped_events.update_one(
-        {"_id": "latest"},
-        {"$set": {
-            **results,
-            "last_updated": datetime.now(timezone.utc).isoformat()
-        }},
+    # Mark as scraping
+    await db.scrape_status.update_one(
+        {"_id": "current"},
+        {"$set": {"status": "scraping", "started_at": datetime.now(timezone.utc).isoformat()}},
         upsert=True
     )
     
-    return {
-        **results,
-        "last_updated": datetime.now(timezone.utc).isoformat()
-    }
+    # Run scraping in background
+    background_tasks.add_task(run_scrape_task)
+    
+    return {"status": "started", "message": "Scraping started in background"}
+
+async def run_scrape_task():
+    """Background task to scrape all event sources"""
+    try:
+        results = {}
+        for source in EVENT_SOURCES:
+            logger.info(f"Scraping events from {source['name']}...")
+            result = await scrape_events_from_source(source['url'])
+            results[source['id']] = result if result else []
+        
+        # Cache results in database
+        await db.scraped_events.update_one(
+            {"_id": "latest"},
+            {"$set": {
+                **results,
+                "last_updated": datetime.now(timezone.utc).isoformat()
+            }},
+            upsert=True
+        )
+        
+        # Mark as complete
+        await db.scrape_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "complete", "completed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        logger.info("Scraping completed successfully")
+    except Exception as e:
+        logger.error(f"Scraping failed: {str(e)}")
+        await db.scrape_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "error", "error": str(e)}}
+        )
+
+@api_router.get("/ai-concierge/status")
+async def get_scrape_status():
+    """Get current scraping status"""
+    status = await db.scrape_status.find_one({"_id": "current"}, {"_id": 0})
+    return status or {"status": "idle"}
 
 @api_router.get("/ai-concierge/sources")
 async def get_event_sources():
