@@ -123,9 +123,9 @@ class TestAuth:
         assert r.status_code == 401
 
 
-# Scout API tests - Event Concierge & Opportunity Hunter
+# Scout API tests - Event Concierge & Opportunity Hunter with DuckDuckGo search
 class TestScoutAPI:
-    """Tests for Scout page API endpoints"""
+    """Tests for Scout page API endpoints including DuckDuckGo web search"""
     
     def test_get_scout_events(self):
         """GET /api/scout/events returns cached results or empty"""
@@ -156,3 +156,45 @@ class TestScoutAPI:
         data = r.json()
         assert "status" in data
         assert data["status"] in ["idle", "scraping", "complete", "error"]
+    
+    def test_search_urls_duckduckgo(self):
+        """POST /api/scout/search-urls returns discovered URLs from DuckDuckGo"""
+        r = requests.post(f"{BASE_URL}/api/scout/search-urls", json={
+            "query": "upcoming web3 events 2026",
+            "count": 5
+        })
+        assert r.status_code == 200
+        data = r.json()
+        assert "urls" in data
+        assert isinstance(data["urls"], list)
+        # Should return up to 5 URLs
+        assert len(data["urls"]) <= 5
+        # Each URL should have url and name fields
+        for url_item in data["urls"]:
+            assert "url" in url_item
+            assert "name" in url_item
+            assert url_item["url"].startswith("http")
+    
+    def test_search_urls_empty_query(self):
+        """POST /api/scout/search-urls with empty query returns empty or handles gracefully"""
+        r = requests.post(f"{BASE_URL}/api/scout/search-urls", json={
+            "query": "",
+            "count": 5
+        })
+        # Should return 200 with empty results or 422 validation error
+        assert r.status_code in [200, 422]
+        if r.status_code == 200:
+            data = r.json()
+            assert "urls" in data
+    
+    def test_search_urls_different_query(self):
+        """POST /api/scout/search-urls with different query returns relevant URLs"""
+        r = requests.post(f"{BASE_URL}/api/scout/search-urls", json={
+            "query": "web3 developer jobs 2026",
+            "count": 3
+        })
+        assert r.status_code == 200
+        data = r.json()
+        assert "urls" in data
+        assert isinstance(data["urls"], list)
+        assert len(data["urls"]) <= 3
