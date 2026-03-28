@@ -38,9 +38,11 @@ Build a cinematic, scroll-choreographed event discovery and management platform 
 
 ### Scout Page (March 2026)
 - Two tabs: Event Concierge, Opportunity Hunter
-- Source management (add/remove custom URLs)
+- Source management: predefined sources + DuckDuckGo web search discovery + manual URL addition
+- DuckDuckGo integration: search a query, discover relevant URLs, add them as sources (marked "discovered")
 - Background web scraping via TinyFish API with polling (BackgroundTasks)
-- Clean layout without 3D animation (simplified per user request, March 28 2026)
+- Brave Search API commented out for future use
+- Clean layout without 3D animation (simplified per user request)
 
 ### Backend (`/app/backend/server.py`)
 - JWT auth: POST /api/auth/register, /api/auth/login, /api/auth/logout
