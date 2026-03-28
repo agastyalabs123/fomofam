@@ -121,3 +121,38 @@ class TestAuth:
     def test_auth_me_unauthenticated(self):
         r = requests.get(f"{BASE_URL}/api/auth/me")
         assert r.status_code == 401
+
+
+# Scout API tests - Event Concierge & Opportunity Hunter
+class TestScoutAPI:
+    """Tests for Scout page API endpoints"""
+    
+    def test_get_scout_events(self):
+        """GET /api/scout/events returns cached results or empty"""
+        r = requests.get(f"{BASE_URL}/api/scout/events")
+        assert r.status_code == 200
+        data = r.json()
+        assert "results" in data or "last_updated" in data
+    
+    def test_get_scout_opportunities(self):
+        """GET /api/scout/opportunities returns cached results or empty"""
+        r = requests.get(f"{BASE_URL}/api/scout/opportunities")
+        assert r.status_code == 200
+        data = r.json()
+        assert "results" in data or "last_updated" in data
+    
+    def test_get_scout_events_status(self):
+        """GET /api/scout/events/status returns status"""
+        r = requests.get(f"{BASE_URL}/api/scout/events/status")
+        assert r.status_code == 200
+        data = r.json()
+        assert "status" in data
+        assert data["status"] in ["idle", "scraping", "complete", "error"]
+    
+    def test_get_scout_opportunities_status(self):
+        """GET /api/scout/opportunities/status returns status"""
+        r = requests.get(f"{BASE_URL}/api/scout/opportunities/status")
+        assert r.status_code == 200
+        data = r.json()
+        assert "status" in data
+        assert data["status"] in ["idle", "scraping", "complete", "error"]
