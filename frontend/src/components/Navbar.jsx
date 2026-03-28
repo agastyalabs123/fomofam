@@ -53,6 +53,13 @@ export default function Navbar({ onAuthOpen }) {
               Explore
             </button>
             <button 
+              onClick={() => navigate('/scout')}
+              className={`text-sm font-medium transition-colors tracking-wide ${location.pathname === '/scout' ? 'text-white' : 'text-white/50 hover:text-white'}`}
+              data-testid="nav-scout"
+            >
+              Scout
+            </button>
+            <button 
               onClick={() => navigate('/create')}
               className={`text-sm font-medium transition-colors tracking-wide ${location.pathname === '/create' ? 'text-white' : 'text-white/50 hover:text-white'}`}
               data-testid="nav-create"
@@ -123,6 +130,12 @@ export default function Navbar({ onAuthOpen }) {
                   className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium"
                 >
                   Explore
+                </button>
+                <button 
+                  onClick={() => { navigate('/scout'); setMenuOpen(false); }} 
+                  className="block w-full text-left py-2 text-white/60 hover:text-white text-sm font-medium"
+                >
+                  Scout
                 </button>
                 <button 
                   onClick={() => { navigate('/create'); setMenuOpen(false); }} 

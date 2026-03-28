@@ -1,32 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Compass, Sparkles, Bot, RefreshCw, Calendar, MapPin, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Compass, Calendar, MapPin, Users, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const SOURCE_COLORS = {
-  solana: 'from-purple-500 to-purple-600',
-  cryptonomads: 'from-orange-500 to-orange-600', 
-  ethglobal: 'from-blue-500 to-blue-600'
-};
-
-const SOURCE_NAMES = {
-  solana: 'Solana Events',
-  cryptonomads: 'Crypto Nomads',
-  ethglobal: 'ETH Global'
-};
+const TAGS = ['All', 'Hackathons', 'Networking', 'Conferences', 'Meetups', 'Workshops', 'Web3', 'AI', 'Music'];
 
 export default function ExplorePage({ onAuthOpen }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [events, setEvents] = useState({ solana: [], cryptonomads: [], ethglobal: [], last_updated: null });
-  const [scraping, setScraping] = useState(false);
-  const [error, setError] = useState('');
-  const [expandedSource, setExpandedSource] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [activeTag, setActiveTag] = useState('All');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -35,88 +23,22 @@ export default function ExplorePage({ onAuthOpen }) {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    // Load cached events on mount
-    fetchCachedEvents();
+    fetchEvents();
   }, []);
 
-  const fetchCachedEvents = async () => {
+  const fetchEvents = async () => {
     try {
-      const res = await axios.get(`${API}/ai-concierge/events`);
+      const res = await axios.get(`${API}/events`);
       setEvents(res.data);
     } catch (err) {
-      console.error('Failed to fetch cached events');
+      console.error('Failed to fetch events');
     }
   };
 
-  const handleScrape = async () => {
-    setScraping(true);
-    setError('');
-    try {
-      // Start scraping in background
-      const startRes = await axios.post(`${API}/ai-concierge/scrape`, {}, { withCredentials: true });
-      
-      if (startRes.data.status === 'already_scraping') {
-        // Already scraping, just poll for results
-      } else if (startRes.data.status === 'started') {
-        // Started, poll for completion
-      }
-      
-      // Poll for completion
-      let attempts = 0;
-      const maxAttempts = 60; // 2 minutes max
-      
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-        
-        const statusRes = await axios.get(`${API}/ai-concierge/status`);
-        
-        if (statusRes.data.status === 'complete') {
-          // Fetch the results
-          const eventsRes = await axios.get(`${API}/ai-concierge/events`);
-          setEvents(eventsRes.data);
-          break;
-        } else if (statusRes.data.status === 'error') {
-          setError('Scraping failed: ' + (statusRes.data.error || 'Unknown error'));
-          break;
-        }
-        
-        attempts++;
-      }
-      
-      if (attempts >= maxAttempts) {
-        setError('Scraping is taking too long. Please check back later.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to fetch events. Please try again.');
-    } finally {
-      setScraping(false);
-    }
-  };
-
-  const toggleSource = (source) => {
-    setExpandedSource(expandedSource === source ? null : source);
-  };
-
-  const parseEvents = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (typeof data === 'string') {
-      try {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) return parsed;
-        if (parsed.events) return parsed.events;
-        return [];
-      } catch {
-        return [];
-      }
-    }
-    if (data.events && Array.isArray(data.events)) return data.events;
-    return [];
-  };
-
-  const hasEvents = parseEvents(events.solana).length > 0 || 
-                    parseEvents(events.cryptonomads).length > 0 || 
-                    parseEvents(events.ethglobal).length > 0;
+  const filtered = activeTag === 'All' ? events : events.filter(e =>
+    e.tags?.some(t => t.toLowerCase().includes(activeTag.toLowerCase())) ||
+    e.category?.toLowerCase().includes(activeTag.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -133,7 +55,7 @@ export default function ExplorePage({ onAuthOpen }) {
       <Navbar onAuthOpen={onAuthOpen} />
       
       <div className="pt-24 pb-16 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {/* Back button */}
           <motion.button
             initial={{ opacity: 0, x: -20 }}
@@ -157,181 +79,110 @@ export default function ExplorePage({ onAuthOpen }) {
             <h1 className="font-display font-black text-4xl sm:text-5xl text-white tracking-tight mb-4">
               Discover <span className="text-gradient">Events</span>
             </h1>
-            <p className="text-white/45 font-body text-base">Find upcoming Web3 events from around the world.</p>
+            <p className="text-white/45 font-body text-base">Find and join community events around the world.</p>
           </motion.div>
 
-          {/* AI Concierge Section */}
+          {/* Filter tags */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="glass-card p-6 sm:p-8 mb-8"
-            data-testid="ai-concierge-section"
+            transition={{ delay: 0.1 }}
+            className="flex flex-wrap gap-2 mb-8"
+            data-testid="filter-tags"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                  <Bot size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="font-display font-bold text-xl text-white">AI Concierge</h2>
-                  <p className="text-white/40 text-sm">Fetches upcoming events from top Web3 sources</p>
-                </div>
-              </div>
+            {TAGS.map(tag => (
               <button
-                onClick={handleScrape}
-                disabled={scraping}
-                className="btn-white py-2.5 px-5 text-sm flex items-center gap-2 disabled:opacity-50"
-                data-testid="fetch-events-btn"
+                key={tag}
+                onClick={() => setActiveTag(tag)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeTag === tag
+                    ? 'bg-white text-black'
+                    : 'glass text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                data-testid={`filter-tag-${tag.toLowerCase()}`}
               >
-                <RefreshCw size={16} className={scraping ? 'animate-spin' : ''} />
-                {scraping ? 'Fetching...' : 'Fetch Events'}
+                {tag}
               </button>
-            </div>
+            ))}
+          </motion.div>
 
-            {/* Last Updated */}
-            {events.last_updated && (
-              <p className="text-white/30 text-xs mb-4">
-                Last updated: {new Date(events.last_updated).toLocaleString()}
-              </p>
-            )}
-
-            {/* Error Message */}
-            {error && (
+          {/* Events Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((event, idx) => (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                key={event.event_id}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm mb-4"
+                transition={{ delay: idx * 0.05 }}
+                className="glass-card p-5 hover:bg-white/8 transition-all cursor-pointer group"
+                data-testid={`event-card-${event.event_id}`}
               >
-                {error}
-              </motion.div>
-            )}
-
-            {/* Scraping in Progress */}
-            {scraping && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12"
-              >
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <RefreshCw size={28} className="text-white/60 animate-spin" />
-                </div>
-                <p className="text-white/50 mb-2">AI Concierge is fetching events...</p>
-                <p className="text-white/30 text-sm">This may take a minute</p>
-              </motion.div>
-            )}
-
-            {/* No Events Yet */}
-            {!scraping && !hasEvents && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <Compass size={28} className="text-white/40" />
-                </div>
-                <p className="text-white/50 mb-2">No events loaded yet</p>
-                <p className="text-white/30 text-sm">Click "Fetch Events" to discover upcoming Web3 events</p>
-              </div>
-            )}
-
-            {/* Event Sources */}
-            {!scraping && hasEvents && (
-              <div className="space-y-4">
-                {['solana', 'cryptonomads', 'ethglobal'].map((source) => {
-                  const sourceEvents = parseEvents(events[source]);
-                  const isExpanded = expandedSource === source;
+                {event.image_url && (
+                  <div className="w-full h-32 rounded-xl overflow-hidden mb-4 bg-white/5">
+                    <img 
+                      src={event.image_url} 
+                      alt={event.title} 
+                      className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                    />
+                  </div>
+                )}
+                
+                <h3 className="font-display font-bold text-white mb-2 group-hover:text-white/90">
+                  {event.title}
+                </h3>
+                
+                <p className="text-white/40 text-sm mb-3 line-clamp-2">
+                  {event.description}
+                </p>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-white/50">
+                    <Calendar size={12} />
+                    <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
                   
-                  return (
-                    <div key={source} className="glass rounded-2xl overflow-hidden">
-                      <button
-                        onClick={() => toggleSource(source)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
-                        data-testid={`source-${source}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${SOURCE_COLORS[source]} flex items-center justify-center`}>
-                            <Sparkles size={18} className="text-white" />
-                          </div>
-                          <div className="text-left">
-                            <h3 className="font-display font-semibold text-white">{SOURCE_NAMES[source]}</h3>
-                            <p className="text-white/40 text-xs">{sourceEvents.length} events found</p>
-                          </div>
-                        </div>
-                        {isExpanded ? <ChevronUp size={20} className="text-white/40" /> : <ChevronDown size={20} className="text-white/40" />}
-                      </button>
+                  <div className="flex items-center gap-2 text-white/50">
+                    <MapPin size={12} />
+                    <span>{event.city}, {event.country}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-white/40 flex items-center gap-1">
+                      <Users size={12} />
+                      {event.attendee_count}/{event.capacity}
+                    </span>
+                    
+                    {event.funding_goal > 0 && (
+                      <span className="text-white/60 flex items-center gap-1">
+                        <TrendingUp size={12} />
+                        {Math.round((event.funding_raised / event.funding_goal) * 100)}% funded
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {event.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-white/5">
+                    {event.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="px-2 py-0.5 rounded-full bg-white/5 text-white/40 text-xs">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
 
-                      <AnimatePresence>
-                        {isExpanded && sourceEvents.length > 0 && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="border-t border-white/5"
-                          >
-                            <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-                              {sourceEvents.map((event, idx) => (
-                                <div
-                                  key={idx}
-                                  className="glass p-4 rounded-xl"
-                                  data-testid={`event-card-${source}-${idx}`}
-                                >
-                                  <h4 className="font-display font-semibold text-white mb-2">
-                                    {event.event_name || event.name || event.title || 'Unnamed Event'}
-                                  </h4>
-                                  {(event.event_description || event.description) && (
-                                    <p className="text-white/50 text-sm mb-3 line-clamp-2">
-                                      {event.event_description || event.description}
-                                    </p>
-                                  )}
-                                  <div className="flex flex-wrap gap-3 text-xs">
-                                    {(event.start_date || event.date) && (
-                                      <span className="text-white/40 flex items-center gap-1">
-                                        <Calendar size={12} />
-                                        {event.start_date || event.date}
-                                        {event.end_date && ` - ${event.end_date}`}
-                                      </span>
-                                    )}
-                                    {(event.event_location || event.location) && (
-                                      <span className="text-white/40 flex items-center gap-1">
-                                        <MapPin size={12} />
-                                        {event.event_location || event.location}
-                                      </span>
-                                    )}
-                                    {event.url && (
-                                      <a
-                                        href={event.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-400 flex items-center gap-1 hover:text-blue-300"
-                                      >
-                                        <ExternalLink size={12} />
-                                        View
-                                      </a>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
+          {filtered.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                <Compass size={28} className="text-white/40" />
               </div>
-            )}
-          </motion.div>
-
-          {/* Sources Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass p-4 rounded-xl"
-          >
-            <p className="text-white/30 text-xs text-center">
-              Events are scraped from Solana.com, CryptoNomads.org, and EthGlobal.com using AI
-            </p>
-          </motion.div>
+              <p className="text-white/50 mb-2">No events found</p>
+              <p className="text-white/30 text-sm">Try a different filter or check back later</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

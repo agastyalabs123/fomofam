@@ -5,6 +5,7 @@ import AuthCallback from './pages/AuthCallback';
 import ProfilePage from './pages/ProfilePage';
 import ExplorePage from './pages/ExplorePage';
 import CreatePage from './pages/CreatePage';
+import ScoutPage from './pages/ScoutPage';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import ExploreSection from './components/ExploreSection';
@@ -64,6 +65,7 @@ function AppRouter() {
         <Route path="/profile" element={<ProfilePage onAuthOpen={openAuth} />} />
         <Route path="/explore" element={<ExplorePage onAuthOpen={openAuth} />} />
         <Route path="/create" element={<CreatePage onAuthOpen={openAuth} />} />
+        <Route path="/scout" element={<ScoutPage onAuthOpen={openAuth} />} />
         <Route path="*" element={<LandingPage onAuthOpen={openAuth} />} />
       </Routes>
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />

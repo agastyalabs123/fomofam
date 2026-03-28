@@ -525,6 +525,212 @@ async def get_event_sources():
     """Get list of event sources"""
     return EVENT_SOURCES
 
+# --- Scout: Event Concierge & Web3 Opportunity Hunter ---
+
+RANDOM_EVENT_WEBSITES = [
+    "https://www.eventbrite.com/d/online/web3/",
+    "https://lu.ma/web3",
+    "https://www.meetup.com/topics/web3/",
+]
+
+RANDOM_OPPORTUNITY_WEBSITES = [
+    "https://cryptocurrencyjobs.co/",
+    "https://www.useweb3.xyz/jobs",
+    "https://remote3.co/",
+]
+
+class ScoutEventRequest(BaseModel):
+    sources: List[str]
+    include_random: bool = True
+
+class ScoutOpportunityRequest(BaseModel):
+    sources: List[str]
+    goal: str
+    include_random: bool = True
+
+async def scrape_url_with_goal(url: str, goal: str):
+    """Scrape a URL with a specific goal using TinyFish API"""
+    if not TINYFISH_API_KEY:
+        return {"error": "TinyFish API key not configured"}
+    
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as http_client:
+            response = await http_client.post(
+                "https://agent.tinyfish.ai/v1/automation/run-sse",
+                headers={
+                    "X-API-Key": TINYFISH_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "url": url,
+                    "goal": goal,
+                }
+            )
+            
+            result = None
+            for line in response.text.split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        event = json.loads(line[6:])
+                        if event.get('type') == 'COMPLETE':
+                            result = event.get('result')
+                            break
+                    except json.JSONDecodeError:
+                        continue
+            
+            return result
+    except Exception as e:
+        logger.error(f"Error scraping {url}: {str(e)}")
+        return {"error": str(e)}
+
+@api_router.get("/scout/events")
+async def get_scout_events():
+    """Get cached scout event results"""
+    cached = await db.scout_events.find_one({"_id": "latest"}, {"_id": 0})
+    if cached:
+        return cached
+    return {"results": {}, "last_updated": None}
+
+@api_router.post("/scout/events/scrape")
+async def scrape_scout_events(data: ScoutEventRequest, background_tasks: BackgroundTasks):
+    """Start scraping events from provided sources"""
+    if not TINYFISH_API_KEY:
+        raise HTTPException(500, "TinyFish API key not configured")
+    
+    # Check if already scraping
+    status = await db.scout_events_status.find_one({"_id": "current"})
+    if status and status.get("status") == "scraping":
+        return {"status": "already_scraping"}
+    
+    # Mark as scraping
+    await db.scout_events_status.update_one(
+        {"_id": "current"},
+        {"$set": {"status": "scraping", "started_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    # Add random sources if requested
+    sources = data.sources.copy()
+    if data.include_random:
+        import random
+        sources.extend(random.sample(RANDOM_EVENT_WEBSITES, min(2, len(RANDOM_EVENT_WEBSITES))))
+    
+    background_tasks.add_task(run_scout_events_task, sources)
+    return {"status": "started"}
+
+async def run_scout_events_task(sources: List[str]):
+    """Background task to scrape events"""
+    goal = "Extract all events listed on this page. For each event return: event_name, event_description, start_date, end_date, event_time, event_location. Return as a JSON array."
+    
+    try:
+        results = {}
+        for url in sources:
+            try:
+                domain = url.split('/')[2]
+                logger.info(f"Scout: Scraping events from {domain}...")
+                result = await scrape_url_with_goal(url, goal)
+                results[domain] = result if result else []
+            except Exception as e:
+                logger.error(f"Scout: Error scraping {url}: {str(e)}")
+                results[url] = []
+        
+        await db.scout_events.update_one(
+            {"_id": "latest"},
+            {"$set": {"results": results, "last_updated": datetime.now(timezone.utc).isoformat()}},
+            upsert=True
+        )
+        
+        await db.scout_events_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "complete", "completed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    except Exception as e:
+        logger.error(f"Scout events failed: {str(e)}")
+        await db.scout_events_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "error", "error": str(e)}}
+        )
+
+@api_router.get("/scout/events/status")
+async def get_scout_events_status():
+    """Get scout events scraping status"""
+    status = await db.scout_events_status.find_one({"_id": "current"}, {"_id": 0})
+    return status or {"status": "idle"}
+
+@api_router.get("/scout/opportunities")
+async def get_scout_opportunities():
+    """Get cached scout opportunity results"""
+    cached = await db.scout_opportunities.find_one({"_id": "latest"}, {"_id": 0})
+    if cached:
+        return cached
+    return {"results": {}, "last_updated": None}
+
+@api_router.post("/scout/opportunities/scrape")
+async def scrape_scout_opportunities(data: ScoutOpportunityRequest, background_tasks: BackgroundTasks):
+    """Start scraping opportunities from provided sources"""
+    if not TINYFISH_API_KEY:
+        raise HTTPException(500, "TinyFish API key not configured")
+    
+    # Check if already scraping
+    status = await db.scout_opportunities_status.find_one({"_id": "current"})
+    if status and status.get("status") == "scraping":
+        return {"status": "already_scraping"}
+    
+    # Mark as scraping
+    await db.scout_opportunities_status.update_one(
+        {"_id": "current"},
+        {"$set": {"status": "scraping", "started_at": datetime.now(timezone.utc).isoformat(), "goal": data.goal}},
+        upsert=True
+    )
+    
+    # Add random sources if requested
+    sources = data.sources.copy()
+    if data.include_random:
+        import random
+        sources.extend(random.sample(RANDOM_OPPORTUNITY_WEBSITES, min(2, len(RANDOM_OPPORTUNITY_WEBSITES))))
+    
+    background_tasks.add_task(run_scout_opportunities_task, sources, data.goal)
+    return {"status": "started"}
+
+async def run_scout_opportunities_task(sources: List[str], user_goal: str):
+    """Background task to scrape opportunities"""
+    goal = f"Find opportunities matching this goal: {user_goal}. Extract: title, description, company, location, salary/prize/amount if mentioned, deadline, url. Return as a JSON array."
+    
+    try:
+        results = {}
+        for url in sources:
+            try:
+                domain = url.split('/')[2]
+                logger.info(f"Scout: Searching opportunities at {domain}...")
+                result = await scrape_url_with_goal(url, goal)
+                results[domain] = result if result else []
+            except Exception as e:
+                logger.error(f"Scout: Error at {url}: {str(e)}")
+                results[url] = []
+        
+        await db.scout_opportunities.update_one(
+            {"_id": "latest"},
+            {"$set": {"results": results, "goal": user_goal, "last_updated": datetime.now(timezone.utc).isoformat()}},
+            upsert=True
+        )
+        
+        await db.scout_opportunities_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "complete", "completed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    except Exception as e:
+        logger.error(f"Scout opportunities failed: {str(e)}")
+        await db.scout_opportunities_status.update_one(
+            {"_id": "current"},
+            {"$set": {"status": "error", "error": str(e)}}
+        )
+
+@api_router.get("/scout/opportunities/status")
+async def get_scout_opportunities_status():
+    """Get scout opportunities scraping status"""
+    status = await db.scout_opportunities_status.find_one({"_id": "current"}, {"_id": 0})
+    return status or {"status": "idle"}
+
 app.include_router(api_router)
 
 # --- Seed Data ---
