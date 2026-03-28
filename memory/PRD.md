@@ -43,6 +43,7 @@ Build a cinematic, scroll-choreographed event discovery and management platform 
 - Background web scraping via TinyFish API with polling (BackgroundTasks)
 - Brave Search API commented out for future use
 - Clean layout without 3D animation (simplified per user request)
+- Access code gate: invite-only blocker popup (code: FOMOFAM123), persisted in sessionStorage
 
 ### Backend (`/app/backend/server.py`)
 - JWT auth: POST /api/auth/register, /api/auth/login, /api/auth/logout
