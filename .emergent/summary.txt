@@ -1,0 +1,150 @@
+<analysis>**original_problem_statement:** 
+The user wants to build a modern event discovery and management platform called FomoFam. The platform features a premium, pure black & white design with a deep black background (), heavy use of glassmorphism (), and cinematic scroll-triggered animations. Recent additions include user profile management, event creation functionality, and an AI-powered Scout feature that scrapes third-party websites (Solana, CryptoNomads, ETHGlobal) for upcoming Web3 events using the TinyFish API.
+
+**PRODUCT REQUIREMENTS:**
+- **Theme:** Pure black & white, deep black background, white text, heavy glassmorphism.
+- **Hero Section:** 3D rotating globe with glowing pins. (Continents feature still pending).
+- **Core Pages:** Explore, Create Event, Scout (AI Concierge & Opportunity Hunter), Profile, Communities (currently Coming Soon).
+- **Scout/AI Integration:** Background web scraping to fetch Web3 events and opportunities, presented in a 3D/cinematic UI.
+- **Tech Stack:** React, Tailwind CSS, Three.js, FastAPI, MongoDB.
+
+**User's preferred language**: English
+*(INSTRUCTION: Next agent MUST respond in English)*
+
+**what currently exists?** 
+A full-stack React/FastAPI application. The auth system (Google OAuth + Email), UI/UX theme, and navigation are established. The backend includes user management, session handling, event creation, and background task processing for web scraping. The frontend has a functional Profile page, a Create Event page with Shadcn date pickers, and a newly created Scout page designed to house AI-driven event discovery.
+
+**Last working item**:
+- **Last item agent was working:** Redesigning the  to feature a 3D cinematic AI bot design style based on the user's latest request. The agent overwrote the file but did not finish implementation or testing.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** screenshot tool (for immediate visual validation), followed by  (due to massive untested feature buildup).
+- **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+- **Issue 1: 3D Cinematic AI Bot UI for Scout Page (P0)**
+   - **Attempted fixes:** The agent executed a  to overwrite  but context ended immediately after.
+   - **Next debug checklist:**
+      - View  to assess current state.
+      - Implement a Three.js scene (or CSS 3D equivalent) representing an AI Bot alongside the existing Event Concierge and Opportunity Hunter tabs.
+      - Ensure the background polling logic for fetching events remains intact in the new UI.
+   - **Why fix this issue and what will be achieved with the fix?** Fulfils the user's explicit final request.
+   - **Status:** IN PROGRESS
+   - **Is recurring issue?** N
+   - **Should Test frontend/backend/both after fix?** Frontend
+
+- **Issue 2: Add Continents to 3D Globe (P1)**
+   - **Attempted fixes:**  exists in , but code implementation was continually skipped due to new user feature requests.
+   - **Next debug checklist:**
+      - Modify .
+      - Load  via .
+      - Create a  to render landmasses distinct from oceans while keeping the wireframe/dark aesthetic.
+   - **Why fix this issue and what will be achieved with the fix?** Carried over from the previous handoff; heavily requested by the user initially.
+   - **Status:** NOT STARTED
+   - **Is recurring issue?** N
+   - **Should Test frontend/backend/both after fix?** Frontend
+
+**In progress Task List**:
+- **Task 1: Complete Web3 Opportunity Hunter scraping logic (P1)**
+   - **Where to resume:** The UI for the Opportunity Hunter tab was built on the Scout page, but the backend scraping logic () is currently hardcoded for Event Concierge sources. Need to allow dynamic prompt goals for the Opportunity Hunter.
+   - **What will be achieved with this?** Fully functional Opportunity Hunter tab.
+   - **Status:** IN PROGRESS
+   - **Should Test frontend/backend/both after fix?** Both
+   - **Blocked on something:** Completion of Issue 1 (Scout Page UI).
+
+**Upcoming and Future Tasks**:
+- 🟡 **P1: Make Communities Section Functional:** Implement backend models and frontend to remove the Coming Soon badge.
+- 🟡 **P2: Full Interactive Map:** Replace the static map image with Leaflet/Mapbox integration dynamically loading events.
+- 🟢 **P3: Event Details Page:** Clicking on created or scraped events should lead to a detailed view.
+- 🟢 **P3: Reputation System:** Build on-chain reputation UI/UX logic.
+
+**Completed work in this session**:
+- Fixed AuthModal positioning (CSS flexbox fix) and Leaflet z-index overlapping bug ().
+- Built  with tabs and  (Attendee, Organizer, Sponsor). Backend  endpoint added.
+- Built  for event creation with dropdowns and Shadcn  integration. Backend  POST endpoint added.
+- Implemented background web scraping via TinyFish API (). Moved from synchronous request to  with frontend polling to bypass 60s gateway timeouts.
+
+**Earlier issues found/mentioned but not fixed**:
+- **Issue 1: Massive tech debt in server.py**
+   - **Debug checklist:** Check . It is over 600 lines long and handles Auth, Events, Communities, Scraping, and Database connections in one file.
+   - **Why to solve this issue and what will be achieved with this?** As per system prompt instructions to move towards a production-ready app, refactoring routes to  is critical before it becomes unmanageable.
+   - **Should Test frontend/backend/both after fix:** Backend
+   - **Is recurring issue?** N
+
+**Known issue recurrence from previous fork**:
+- **Issue recurrence in previous fork:** None
+- **Recurrence count:** 0
+- **Status:** RESOLVED
+
+**Code Architecture**:
+
+
+**Key Technical Concepts**:
+- **Frontend:** React, Tailwind CSS, Three.js (Imperative), Shadcn UI, Framer Motion.
+- **Backend:** FastAPI,  for async web scraping.
+- **Database:** MongoDB.
+- **Architecture:** SPA with long-polling for asynchronous scraping tasks to bypass 60s Kubernetes ingress timeouts.
+
+**key DB schema**:
+- : 
+- : 
+- : 
+- : 
+
+**changes in tech stack**:
+- Added , ,  for Shadcn UI date picker.
+
+**All files of reference**:
+- : Contains the unfinished 3D cinematic AI bot UI. Needs immediate attention.
+- : Contains the  scraping logic.
+- : Contains Shadcn calendar logic.
+- : Newly created for onboarding.
+- : Needs continents update.
+
+**Areas that need refactoring**:
+-  absolutely needs to be broken down into separate routers (Auth, Events, Scout/Scraping).
+
+**key api endpoints**:
+- : Triggers async .
+- : Polls scraping status.
+- : Fetches cached scraped events.
+- : Creates a new user-generated event.
+- : Updates user profile tags.
+
+**Critical Info for New Agent**:
+- **Scraping Architecture:** The preview environment has a strict 60-second gateway timeout. *Never* use synchronous requests for web scraping. The previous agent correctly set up a  pattern in FastAPI with frontend polling. Maintain this architecture for the Opportunity Hunter feature.
+- **Globe Component:**  must use imperative Three.js, not declarative , due to v9 incompatibilities in this specific environment setup.
+- **Missing Tests:** The previous agent built massive features (Profile, Create Event, Background Scraping) without ever calling . A comprehensive frontend and backend test is highly recommended once the current UI task is stable.
+
+**documents and test reports created in this job**:
+- (None. Agent failed to generate test reports or update PRD at the end of the session).
+
+**Last 10 User Messages and any pending HUMAN messages**:
+1.  (IN PROGRESS - Agent initiated rewrite but context died).
+2.  (COMPLETED)
+3.  (COMPLETED - Fixed via BackgroundTasks polling).
+4.  (COMPLETED)
+5.  (COMPLETED)
+6.  (COMPLETED - Removed Google-only OAuth restrictions).
+7.  (COMPLETED - Integrated Shadcn UI Calendar).
+8.  (COMPLETED).
+9.  (COMPLETED).
+10.  (COMPLETED - Added Role Selection Modal).
+
+**Project Health Check:**
+- **Broken:** None identified currently, but  is in an unknown state due to mid-write termination.
+- **Mocked:** Opportunity Hunter background search logic (UI built, but backend just runs the standard Event Concierge scraping). Community Section is mocked.
+
+**3rd Party Integrations**:
+- TinyFish API (Web Scraping) — requires User API Key ( is currently active in the  file).
+
+**Testing status**:
+- **Testing agent used after significant changes:** NO (CRITICAL OMISSION BY PREVIOUS AGENT)
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None
+- **Known regressions:** None identified, but highly likely given the volume of untested new code.
+
+**What agent forgot to execute**:
+- The agent completely forgot to run  after building three entire feature sets (Profile, Create Event, Background Scraping).
+- The agent ignored the P0 task from the previous handoff (Add continents to 3D globe) because the user kept asking for new things. It remains incomplete.
+- The agent failed to update  using the finish tool at the end of the session due to the prompt cutoff.</analysis>
